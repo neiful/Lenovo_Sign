@@ -27,7 +27,7 @@ def sign(username, password):
     # 获取签到token
     res = session.get(url="https://mclub.lenovo.com.cn/signlist/")
     token = re.findall('token\s=\s"(.*?)"', res.text)[0]
-    data = {"_token": token, "memberSource": 0}
+    data = {"_token": token, "memberSource": 1}
     sign_response = session.post(url="https://mclub.lenovo.com.cn/signadd", data=data)
     sign_days = (
         session.get(url="https://mclub.lenovo.com.cn/getsignincal")
