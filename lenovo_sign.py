@@ -3,6 +3,7 @@
 import requests
 import re
 import base64
+import toml
 
 
 def sign(username, password):
@@ -22,7 +23,7 @@ def sign(username, password):
         url="https://reg.lenovo.com.cn/auth/v2/doLogin", headers=headers, data=data
     )
     if login_response.json().get("ret") == "1":
-        print("账号或密码错误")
+        print(f"{username}账号或密码错误")
         return
     # 获取签到token
     res = session.get(url="https://mclub.lenovo.com.cn/signlist/")
@@ -42,7 +43,13 @@ def sign(username, password):
     session.close()
 
 
+def main():
+    account = toml.load("config.toml").get("ACCOUNT")
+    if not account:
+        return
+    for username, password in account.items():
+        sign(username, password)
+
+
 if __name__ == "__main__":
-    username=""
-    password=""
-    sign(username, password)
+    main()
