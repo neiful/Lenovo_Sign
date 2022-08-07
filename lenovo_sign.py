@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def sign(username, password):
     session = requests.Session()
     session.headers = {
-        "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36 Edg/103.0.5060.42",
+        "user-agent": "Mozilla/5.0 (Linux; Android 5.1.1; PCRT00 Build/LMY48Z; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/52.0.2743.100 Mobile Safari/537.36/lenovoofficialapp/16554342219868859_10128085590/newversion/versioncode-1000080/",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     session.get(url="https://reg.lenovo.com.cn/auth/rebuildleid")
