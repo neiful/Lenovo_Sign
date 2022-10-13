@@ -48,3 +48,28 @@ class Wechat_message:
             data=json.dumps(data),
         )
         return True if response.json().get("errcode") == 0 else False
+        
+class Dingtalk_message():
+    def __init__(self, ding_accesstoken: str) -> None:
+        self.ding_accesstoken = ding_accesstoken
+
+    def ding_push_message(self, content: str) -> bool:
+
+        header = {
+            "Content-Type": "application/json",
+            "Charset": "UTF-8"
+        }
+        data = {
+            "msgtype": "text",
+            "text": {
+                "content": content
+            },
+            "at": {
+                "isAtAll": True
+            }
+        }
+        response = requests.post(
+            f"https://oapi.dingtalk.com/robot/send?access_token={self.ding_accesstoken}",
+            data=json.dumps(data),headers=header
+        )
+        return True if response.json().get("errcode") == 0 else False

@@ -17,3 +17,5 @@ corpid = ''
 corpsecret = ''
 # agentid
 agentid = ''
+[message_push.Dingtalk_message]
+access_token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
