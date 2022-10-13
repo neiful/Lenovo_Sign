@@ -19,12 +19,15 @@ def set_message_type():
     wechat_corpid = jsonpath(CONFIG, "$..corpid")[0]
     wechat_corpsecret = jsonpath(CONFIG, "$..corpsecret")[0]
     wechat_agentid = jsonpath(CONFIG, "$..agentid")[0]
+    ding_accesstoken = jsonpath(CONFIG, "$..access_token")[0]
     if server_chan_sendkey:
         return partial(Server_chan(server_chan_sendkey).send_message, "联想签到")
     elif all([wechat_corpid, wechat_corpsecret, wechat_corpsecret]):
         return Wechat_message(
             wechat_corpid, wechat_corpsecret, wechat_agentid
         ).send_message
+    elif ding_accesstoken:
+        return Dingtalk_message(ding_accesstoken).ding_push_message
     else:
         logging.basicConfig(
             level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
