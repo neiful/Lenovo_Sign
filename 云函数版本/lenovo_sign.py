@@ -7,9 +7,9 @@ import toml
 import logging
 from message_push import Server_chan
 from message_push import Wechat_message
+from message_push import Dingtalk_message
 from jsonpath import jsonpath
 from functools import partial
-
 
 CONFIG = toml.load(r"config.toml")
 
