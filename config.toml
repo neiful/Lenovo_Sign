@@ -1,21 +1,23 @@
+[browser]
+# 不用填
+ua = ""
+
 [account]
-# 账号配置(别忘记去掉注释"#")
-# 单账号示例:
-# 18888888888 = 'password'
-# 多账号示例:
-# 18888888888 = 'password'
-# 19999999999 = 'password'
+# 你的手机号对应你的密码，必须填，别忘记去掉”#“
+# 177777777 = "密码"
 
-[message_push.server_chan]
-# server酱推送key
-send_key = ''
+[cookies]
 
-[message_push.wechat_message]
-# 企业id
-corpid = ''
-# secret
-corpsecret = ''
-# agentid
-agentid = ''
+[message_push.Server_chan]
+# server酱推送
+send_key = ""
+
+[message_push.Wechat_message]
+# 微信企业消息
+corpid = ""
+corpsecret = ""
+agentid = ""
+
 [message_push.Dingtalk_message]
-access_token = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+# 钉钉推送
+access_token = ""

@@ -185,7 +185,7 @@ def sign(session):
         return f"\U0001F6AB账号{username}今天已经签到, \U0001F4C6连续签到{sign_days}天, \U0001F954共有乐豆{ledou}个, \U0001F4C5共有延保{serviceAmount}天\n"
 
 
-def main():
+def handler(event, context):
     global logger, config_file, config, ua, username
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
@@ -209,4 +209,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    handler()
