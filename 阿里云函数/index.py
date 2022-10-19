@@ -117,7 +117,7 @@ def login(username, password):
         )
         if login_response.json().get("ret") == "1":
             logger(f"{username}账号或密码错误")
-            exit(1)
+            return None
         ck_dict = dict_from_cookiejar(session.cookies)
         config["cookies"][username] = f"{ck_dict}"
         toml.dump(config, open(config_file, "w"))
@@ -201,9 +201,10 @@ def handler(event, context):
         config["browser"]["ua"] = ua
     push = set_push_type()
     message = "联想签到: \n"
-
     for username, password in account.items():
         session = login(username, password)
+        if not session:
+            continue
         message += sign(session)
     push(message)
 
