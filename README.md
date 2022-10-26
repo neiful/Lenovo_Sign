@@ -24,14 +24,25 @@ which python3
 # 每天上午九点运行
 0 9 * * * /usr/local/bin/python3 /root/lenovo_sign.py &> lenovo_sign.log
 ```
-  
-## 阿里云函数使用
+## 腾讯云函数使用
 
-1. 将阿里云函数目录里面的`index.py`代码复制粘贴到阿里云函数里面的`index.py`
+1. 将云函数目录里面的`index.py`代码复制粘贴到腾讯云函数里面的`index.py`
 2. 创建文件`config.toml`，将`config.toml`里面的配置也复制进去
 3. 安装`requirements.txt`里面的依赖
 ```bash
-pip install requests toml --upgrade -t .
+cd src
+pip3 install requests toml --upgrade -t .
+```
+4.   在`config.toml`按照配置你的账号和选择推送通知的类型，也可以不选择推送，不填即可
+5. 完成！部署测试
+
+## 阿里云函数使用
+
+1. 将云函数目录里面的`index.py`代码复制粘贴到阿里云函数里面的`index.py`
+2. 创建文件`config.toml`，将`config.toml`里面的配置也复制进去
+3. 安装`requirements.txt`里面的依赖
+```bash
+pip3 install requests toml --upgrade -t .
 ```
 4.   在`config.toml`按照配置你的账号和选择推送通知的类型，也可以不选择推送，不填即可
 5. 完成！部署测试
@@ -50,6 +61,8 @@ pip install requests toml --upgrade -t .
 - 钉钉群机器人
 
 ## 更新
+- 2022.10.26
+	1. 优化云函数代码
 - 2022.10.19
 	1. 多账号签到，账号密码错过略过，不影响下面签到的账号
 - 2022.10.18
