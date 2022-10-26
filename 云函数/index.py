@@ -176,8 +176,14 @@ def sign(session):
         .get("continueCount")
     )
     sign_user_info = session.get("https://mclub.lenovo.com.cn/signuserinfo")
-    serviceAmount = sign_user_info.json().get("serviceAmount")
-    ledou = sign_user_info.json().get("ledou")
+    try: 
+        serviceAmount = sign_user_info.json().get("serviceAmount")
+        ledou = sign_user_info.json().get("ledou")
+    except Exception as e:
+        logger(sign_user_info.headers["content-type"])
+        logger(sign_user_info.status_code)
+        logger(e)
+        serviceAmount, ledou = None, None
     session.close()
     if sign_response.json().get("success"):
         return f"\U00002705账号{username}签到成功, \U0001F4C6连续签到{sign_days}天, \U0001F954共有乐豆{ledou}个, \U0001F4C5共有延保{serviceAmount}天\n"
