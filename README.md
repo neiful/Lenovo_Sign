@@ -24,7 +24,7 @@ which python3
 # 每天上午九点运行
 0 9 * * * /usr/local/bin/python3 /root/lenovo_sign.py &> lenovo_sign.log
 ```
-## 腾讯云函数使用
+## ~~腾讯云函数使用~~
 
 1. 将云函数目录里面的`index.py`代码复制粘贴到腾讯云函数里面的`index.py`
 2. 创建文件`config.toml`，将`config.toml`里面的配置也复制进去
