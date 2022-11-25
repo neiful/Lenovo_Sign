@@ -1,5 +1,10 @@
 # lenovo-sign
 联想智选签到
+
+**使用须知：**  
+**1. 使用的Python版本必须大于等于Python3.8**  
+**2. 定时执行的任务必须放到中午十二点以后（推荐中午十二点），本人在早上八九点测试有问题**
+
 ## 本地使用
 
 1. 克隆本仓库
@@ -21,8 +26,8 @@ python3 lenovo_sign.py
 # 查看python3解释器绝对路径，crontab里面要写解释器绝对路径
 which python3
 /usr/local/bin/python3
-# 每天上午九点运行
-0 9 * * * /usr/local/bin/python3 /root/lenovo_sign.py &> lenovo_sign.log
+# 每天中午12点运行
+0 12 * * * /usr/local/bin/python3 /root/lenovo_sign.py &> lenovo_sign.log
 ```
 ## ~~腾讯云函数使用~~
 
