@@ -7,22 +7,19 @@ import random
 import re
 from sys import exit
 
+import smtplib
+from email.mime.text import MIMEText
+from smtplib import SMTP_SSL
+from email.header import Header
+
 import requests
 import toml
 from requests.utils import cookiejar_from_dict, dict_from_cookiejar
 
 
 USER_AGENT = [
-    "Mozilla/5.0 (Linux; Android 10; ELS-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; HLK-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; VOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; ART-AL00x) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; ELS-AN10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; AQM-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; CDY-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; JER-AN10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; V1962A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 10; V1938CT) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.92 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; U; Android 11; zh-cn; PDYM20 Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/40.7.24.9",
+    "Mozilla/5.0 (Linux; Android 12; Redmi K30 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36"
 ]
 
 
@@ -86,6 +83,34 @@ class Push_messages:
                 data=json.dumps(data),
             )
             return True if response.json().get("errcode") == 0 else False
+
+    class Email_message:
+        def __init__(self, sender_email: str, sender_password: str, receiver_email: str, smtp_server: str,
+                     smtp_port: int) -> None:
+            self.sender_email = sender_email
+            self.sender_password = sender_password
+            self.receiver_email = receiver_email
+            self.smtp_server = smtp_server
+            self.smtp_port = smtp_port
+
+        def send_message(self, content: str) -> bool:
+            receiver_email = [self.receiver_email]
+
+            message = MIMEText(content, 'plain', 'utf-8')
+            message['Subject'] = Header("联想智选定时签到结果", "utf-8")
+            message['From'] = Header("联想智选定时签到程序", "utf-8")
+            message['To'] = receiver_email[0]
+
+            try:
+                smtp = SMTP_SSL(self.smtp_server, self.smtp_port)
+                smtp.login(self.sender_email, self.sender_password)
+                smtp.sendmail(
+                    self.sender_email, receiver_email, message.as_string())
+                smtp.quit()
+                return True
+            except smtplib.SMTPException as e:
+                print('send email error', e)
+                return False
 
 
 def set_push_type():
