@@ -7,6 +7,11 @@ import random
 import re
 from sys import exit
 
+import smtplib
+from email.mime.text import MIMEText
+from smtplib import SMTP_SSL
+from email.header import Header
+
 import requests
 import toml
 from requests.utils import cookiejar_from_dict, dict_from_cookiejar
@@ -86,6 +91,34 @@ class Push_messages:
                 data=json.dumps(data),
             )
             return True if response.json().get("errcode") == 0 else False
+
+    class Email_message:
+        def __init__(self, sender_email: str, sender_password: str, receiver_email: str, smtp_server: str,
+                     smtp_port: int) -> None:
+            self.sender_email = sender_email
+            self.sender_password = sender_password
+            self.receiver_email = receiver_email
+            self.smtp_server = smtp_server
+            self.smtp_port = smtp_port
+
+        def send_message(self, content: str) -> bool:
+            receiver_email = [self.receiver_email]
+
+            message = MIMEText(content, 'plain', 'utf-8')
+            message['Subject'] = Header("联想智选定时签到结果", "utf-8")
+            message['From'] = Header("联想智选定时签到程序", "utf-8")
+            message['To'] = receiver_email[0]
+
+            try:
+                smtp = SMTP_SSL(self.smtp_server, self.smtp_port)
+                smtp.login(self.sender_email, self.sender_password)
+                smtp.sendmail(
+                    self.sender_email, receiver_email, message.as_string())
+                smtp.quit()
+                return True
+            except smtplib.SMTPException as e:
+                print('send email error', e)
+                return False
 
 
 def set_push_type():

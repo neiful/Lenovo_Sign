@@ -21,3 +21,16 @@ agentid = ""
 [message_push.Dingtalk_message]
 # 钉钉推送
 access_token = ""
+
+[message_push.Email_message]
+# smtp邮件推送
+# 签到结果发送者邮箱
+sender_email = ""
+# 邮箱授权码
+sender_password = ""
+# 签到结果接收邮箱
+receiver_email = ""
+# 邮件发送smtp服务器
+smtp_server = ""
+# smpt 端口, 务必使用ssl端口
+smtp_port = ""
