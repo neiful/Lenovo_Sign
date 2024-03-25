@@ -85,8 +85,8 @@ def main():
         level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
     )
     logger = logging.getLogger(__name__).info
-    config_file = r"config.toml"
-    config = toml.load(config_file)
+    #config_file = r"config.toml"
+    #config = toml.load(config_file)
     username = os.environ.get('USERNAME')
     password = os.environ.get('PASSWORD')
     if not (ua := config.get("browser").get("ua")):
