@@ -6,7 +6,7 @@ import random
 import re
 from sys import exit
 
-#import requests
+import requests
 #import toml
 #from requests.utils import cookiejar_from_dict, dict_from_cookiejar
 
