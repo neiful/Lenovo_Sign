@@ -50,24 +50,8 @@ def login(username, password):
         "user-agent": ua,
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-    if cookie_dict := config.get("cookies").get(username):
-        session.cookies = cookiejar_from_dict(eval(cookie_dict))
-        ledou = session.post(
-            "https://i.lenovo.com.cn/info/uledou.jhtml",
-            data={"sts": "b044d754-bda2-4f56-9fea-dcf3aecfe782"},
-        )
-        try:
-            int(ledou.text)
-        except ValueError:
-            logger(f"{username} ck有错，重新获取ck并保存")
-            session = get_cookie()
-            return session
-        logger(f"{username} ck没有错")
-        return session
-    else:
-        logger(f"{username} ck为空，重新获取ck并保存")
-        session = get_cookie()
-        return session
+    session = get_cookie()
+    return session
 
 
 def sign(session):
