@@ -5,10 +5,8 @@ import logging
 import random
 import re
 from sys import exit
-
 import requests
-#import toml
-#from requests.utils import cookiejar_from_dict, dict_from_cookiejar
+from requests.utils import cookiejar_from_dict, dict_from_cookiejar
 
 USER_AGENT = [
     "Mozilla/5.0 (Linux; U; Android 11; zh-cn; PDYM20 Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/40.7.24.9",
@@ -35,10 +33,6 @@ def login(username, password):
     if login_response.json().get("ret") == "1":
         logger(f"{username}账号或密码错误")
         return None
-    #ck_dict = dict_from_cookiejar(session.cookies)
-    #config["cookies"][username] = f"{ck_dict}"
-    #toml.dump(config, open(config_file, "w"))
-    #session.cookies = cookiejar_from_dict(ck_dict)
     return session
 
 def sign(session):
@@ -85,13 +79,8 @@ def main():
         level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
     )
     logger = logging.getLogger(__name__).info
-    #config_file = r"config.toml"
-    #config = toml.load(config_file)
     username = os.environ.get('USERNAME')
     password = os.environ.get('PASSWORD')
-    #if not (ua := config.get("browser").get("ua")):
-    #    ua = random.choice(USER_AGENT)
-    #    config["browser"]["ua"] = ua
     session = login(username, password)
     sign(session)
 if __name__ == "__main__":
