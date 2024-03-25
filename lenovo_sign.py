@@ -16,30 +16,30 @@ USER_AGENT = [
 ]
 
 def login(username, password):
-        session.headers = {
-        "user-agent": ua,
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    session.headers = {
+    "user-agent": ua,
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-        session.get(url="https://reg.lenovo.com.cn/auth/rebuildleid")
-        session.get(
-            url="https://reg.lenovo.com.cn/auth/v1/login?ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3&ru=https%3A%2F%2Fmclub.lenovo.com.cn%2F"
-        )
-        data = f"account={username}&password={base64.b64encode(str(password).encode()).decode()}\
-            &ps=1&ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3&codeid=&code=&slide=v2&applicationPlatform=2&shopId=\
-                1&os=web&deviceId=BIT%2F8ZTwWmvKpMsz3bQspIZRY9o9hK1Ce3zKIt5js7WSUgGQNnwvYmjcRjVHvJbQ00fe3T2wxgjZAVSd\
-                    OYl8rrQ%3D%3D&t=1655187183738&websiteCode=10000001&websiteName=%25E5%2595%2586%25E5%259F%258E%25E\
-                        7%25AB%2599&forwardPageUrl=https%253A%252F%252Fmclub.lenovo.com.cn%252F"
-        login_response = session.post(
-            url="https://reg.lenovo.com.cn/auth/v2/doLogin", data=data
-        )
-        if login_response.json().get("ret") == "1":
-            logger(f"{username}账号或密码错误")
-            return None
-        #ck_dict = dict_from_cookiejar(session.cookies)
-        #config["cookies"][username] = f"{ck_dict}"
-        #toml.dump(config, open(config_file, "w"))
-        #session.cookies = cookiejar_from_dict(ck_dict)
-        return session
+    session.get(url="https://reg.lenovo.com.cn/auth/rebuildleid")
+    session.get(
+        url="https://reg.lenovo.com.cn/auth/v1/login?ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3&ru=https%3A%2F%2Fmclub.lenovo.com.cn%2F"
+    )
+    data = f"account={username}&password={base64.b64encode(str(password).encode()).decode()}\
+        &ps=1&ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3&codeid=&code=&slide=v2&applicationPlatform=2&shopId=\
+            1&os=web&deviceId=BIT%2F8ZTwWmvKpMsz3bQspIZRY9o9hK1Ce3zKIt5js7WSUgGQNnwvYmjcRjVHvJbQ00fe3T2wxgjZAVSd\
+                OYl8rrQ%3D%3D&t=1655187183738&websiteCode=10000001&websiteName=%25E5%2595%2586%25E5%259F%258E%25E\
+                    7%25AB%2599&forwardPageUrl=https%253A%252F%252Fmclub.lenovo.com.cn%252F"
+    login_response = session.post(
+        url="https://reg.lenovo.com.cn/auth/v2/doLogin", data=data
+    )
+    if login_response.json().get("ret") == "1":
+        logger(f"{username}账号或密码错误")
+        return None
+    #ck_dict = dict_from_cookiejar(session.cookies)
+    #config["cookies"][username] = f"{ck_dict}"
+    #toml.dump(config, open(config_file, "w"))
+    #session.cookies = cookiejar_from_dict(ck_dict)
+    return session
 
 def sign(session):
     res = session.get(url="https://mclub.lenovo.com.cn/signlist/")
