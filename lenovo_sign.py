@@ -59,7 +59,7 @@ def sign(session):
     if sign_response.json().get("success"):
         logger(f"账号签到成功！n")
     else:
-        logger(f"账号今天已经签到。\n")    
+        logger(f"账号今天已经签到。\n")
     sign_days = (
         session.get(url="https://mclub.lenovo.com.cn/getsignincal")
         .json()
