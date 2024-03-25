@@ -74,7 +74,7 @@ def sign(session):
         logger(f"账号今天已经签到。\n")
 
 def main():
-    global logger, config_file, config, ua, username
+    global logger, session, username
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
     )
