@@ -62,7 +62,7 @@ def sign(session):
         .get("signinCal")
         .get("continueCount")
     )
-    logger(f"连续登陆{continueCount}天。\n")
+    logger(f"连续登陆{sign_days}天。\n")
     sign_user_info = session.get("https://mclub.lenovo.com.cn/signuserinfo")
     serviceAmount = sign_user_info.json().get("serviceAmount")
     logger(f"延保有{serviceAmount}天。\n")
