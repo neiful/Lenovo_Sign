@@ -37,10 +37,10 @@ def login(username, password):
         if login_response.json().get("ret") == "1":
             logger(f"{username}账号或密码错误")
             return None
-        ck_dict = dict_from_cookiejar(session.cookies)
-        config["cookies"][username] = f"{ck_dict}"
-        toml.dump(config, open(config_file, "w"))
-        session.cookies = cookiejar_from_dict(ck_dict)
+        #ck_dict = dict_from_cookiejar(session.cookies)
+        #config["cookies"][username] = f"{ck_dict}"
+        #toml.dump(config, open(config_file, "w"))
+        #session.cookies = cookiejar_from_dict(ck_dict)
         return session
 
     session = requests.Session()
