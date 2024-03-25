@@ -32,7 +32,7 @@ def login(username, password):
         url="https://reg.lenovo.com.cn/auth/v2/doLogin", data=data
     )
     if login_response.json().get("ret") == "1":
-        logger(f"{username}账号或密码错误")
+        logger(f"账号或密码错误！")
         return None
     return session
 
@@ -56,6 +56,10 @@ def sign(session):
     sign_response = session.post(
         "https://mclub.lenovo.com.cn/signadd", data=data, headers=headers
     )
+    if sign_response.json().get("success"):
+        logger(f"账号签到成功！n")
+    else:
+        logger(f"账号今天已经签到。\n")    
     sign_days = (
         session.get(url="https://mclub.lenovo.com.cn/getsignincal")
         .json()
@@ -63,16 +67,20 @@ def sign(session):
         .get("continueCount")
     )
     logger(f"连续登陆{sign_days}天。\n")
-    sign_user_info = session.get("https://mclub.lenovo.com.cn/signuserinfo")
-    serviceAmount = sign_user_info.json().get("serviceAmount")
+    serviceAmount = (
+        session.get(url="https://mclub.lenovo.com.cn/signuserinfo")
+        .json()
+        .get("serviceAmount")
+    )
     logger(f"延保有{serviceAmount}天。\n")
-    ledou = sign_user_info.json().get("ledou")
+    ledou = (
+        session.get(url="https://mclub.lenovo.com.cn/signuserinfo")
+        .json()
+        .get("ledou")
+    )
     logger(f"乐豆有{ledou}个。\n")
     session.close()
-    if sign_response.json().get("success"):
-        logger(f"账号签到成功！n")
-    else:
-        logger(f"账号今天已经签到。\n")
+
 
 def main():
     global logger, username
