@@ -47,7 +47,7 @@ def sign(session):
         "accept": "application/json, text/javascript, */*; q=0.01",
         "origin": "https://mclub.lenovo.com.cn",
         "x-requested-with": "XMLHttpRequest",
-        "user-agent": ua
+        "user-agent": random.choice(USER_AGENT)
         + "/lenovoofficialapp/16554342219868859_10128085590/newversion/versioncode-1000080/",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "referer": "https://mclub.lenovo.com.cn/signlist?pmf_group=in-push&pmf_medium=app&pmf_source=Z00025783T000",
