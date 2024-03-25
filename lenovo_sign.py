@@ -17,7 +17,7 @@ USER_AGENT = [
 
 def login(username, password):
     session.headers = {
-    "user-agent": ua,
+    "user-agent": random.choice(USER_AGENT),
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     session.get(url="https://reg.lenovo.com.cn/auth/rebuildleid")
