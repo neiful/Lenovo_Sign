@@ -6,9 +6,9 @@ import random
 import re
 from sys import exit
 
-#import requests
-#import toml
-#from requests.utils import cookiejar_from_dict, dict_from_cookiejar
+import requests
+import toml
+from requests.utils import cookiejar_from_dict, dict_from_cookiejar
 
 USER_AGENT = [
     "Mozilla/5.0 (Linux; U; Android 11; zh-cn; PDYM20 Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/40.7.24.9",
@@ -85,8 +85,8 @@ def main():
         level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
     )
     logger = logging.getLogger(__name__).info
-    #config_file = r"config.toml"
-    #config = toml.load(config_file)
+    config_file = r"config.toml"
+    config = toml.load(config_file)
     username = os.environ.get('USERNAME')
     password = os.environ.get('PASSWORD')
     if not (ua := config.get("browser").get("ua")):
