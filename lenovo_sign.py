@@ -6,9 +6,9 @@ import random
 import re
 from sys import exit
 
-import requests
-import toml
-from requests.utils import cookiejar_from_dict, dict_from_cookiejar
+#import requests
+#import toml
+#from requests.utils import cookiejar_from_dict, dict_from_cookiejar
 
 USER_AGENT = [
     "Mozilla/5.0 (Linux; U; Android 11; zh-cn; PDYM20 Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/40.7.24.9",
@@ -16,11 +16,10 @@ USER_AGENT = [
 ]
 
 def login(username, password):
-    def get_cookie():
         session.headers = {
-            "user-agent": ua,
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        }
+        "user-agent": ua,
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
         session.get(url="https://reg.lenovo.com.cn/auth/rebuildleid")
         session.get(
             url="https://reg.lenovo.com.cn/auth/v1/login?ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3&ru=https%3A%2F%2Fmclub.lenovo.com.cn%2F"
@@ -33,7 +32,6 @@ def login(username, password):
         login_response = session.post(
             url="https://reg.lenovo.com.cn/auth/v2/doLogin", data=data
         )
-
         if login_response.json().get("ret") == "1":
             logger(f"{username}账号或密码错误")
             return None
@@ -42,15 +40,6 @@ def login(username, password):
         #toml.dump(config, open(config_file, "w"))
         #session.cookies = cookiejar_from_dict(ck_dict)
         return session
-
-    session = requests.Session()
-    session.headers = {
-        "user-agent": ua,
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    }
-    session = get_cookie()
-    return session
-
 
 def sign(session):
     res = session.get(url="https://mclub.lenovo.com.cn/signlist/")
@@ -78,21 +67,17 @@ def sign(session):
         .get("signinCal")
         .get("continueCount")
     )
+    logger(f"连续登陆{continueCount}天。\n")
     sign_user_info = session.get("https://mclub.lenovo.com.cn/signuserinfo")
-    try: 
-        serviceAmount = sign_user_info.json().get("serviceAmount")
-        ledou = sign_user_info.json().get("ledou")
-    except Exception as e:
-        logger(sign_user_info.headers["content-type"])
-        logger(sign_user_info.status_code)
-        logger(e)
-        serviceAmount, ledou = None, None
+    serviceAmount = sign_user_info.json().get("serviceAmount")
+    logger(f"延保有{serviceAmount}天。\n")
+    ledou = sign_user_info.json().get("ledou")
+    logger(f"乐豆有{ledou}个。\n")
     session.close()
     if sign_response.json().get("success"):
-        logger(f"\U00002705账号{username}签到成功, \U0001F4C6连续签到{sign_days}天, \U0001F954共有乐豆{ledou}个, \U0001F4C5共有延保{serviceAmount}天\n")
+        logger(f"账号签到成功！n")
     else:
-        logger(f"\U0001F6AB账号{username}今天已经签到, \U0001F4C6连续签到{sign_days}天, \U0001F954共有乐豆{ledou}个, \U0001F4C5共有延保{serviceAmount}天\n")
-
+        logger(f"账号今天已经签到。\n")
 
 def main():
     global logger, config_file, config, ua, username
