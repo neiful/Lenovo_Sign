@@ -14,6 +14,7 @@ USER_AGENT = [
 ]
 
 def login(username, password):
+    session = requests.Session()
     session.headers = {
     "user-agent": random.choice(USER_AGENT),
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -74,7 +75,7 @@ def sign(session):
         logger(f"账号今天已经签到。\n")
 
 def main():
-    global logger, session, username
+    global logger, username
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s: %(message)s"
     )
