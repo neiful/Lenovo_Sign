@@ -1,8 +1,8 @@
 name: Lenovo Sign
 on:
   schedule:
-    - cron: '0 2 * * *'
-    - cron: '0 3 * * *'    
+    - cron: '0 12 * * *'
+    - cron: '0 13 * * *'    
   workflow_dispatch:
 jobs:
   build:
