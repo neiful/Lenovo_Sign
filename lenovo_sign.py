@@ -443,57 +443,91 @@ def sign(session):
     try:
 
 
-        info_resp = session.get(
+        # 刚签到成功时，服务器的乐豆/延保/连续天数可能还没同步过来，
+        # 这里做几次重试，每次间隔递增，直到拿到非空数据
+        info = None
+        ledou = None
+        service_amount = None
 
-            "https://mclub.lenovo.com.cn/signuserinfo",
+        for attempt in range(4):
 
-            headers=ajax_headers(),
+            time.sleep(2 + attempt * 2)
 
-            timeout=15
+            info_resp = session.get(
 
+                "https://mclub.lenovo.com.cn/signuserinfo",
+
+                headers=ajax_headers(),
+
+                timeout=15
+
+            )
+
+            info = safe_json(info_resp, "用户信息(signuserinfo)")
+
+            if info:
+
+                ledou = info.get("ledou")
+                service_amount = info.get("serviceAmount")
+
+            if ledou is not None or service_amount is not None:
+
+                break
+
+            logger(
+                "用户信息暂未同步（乐豆/延保为空），" + str(2 + (attempt + 1) * 2) + "秒后重试..."
+            )
+
+
+        logger(
+            "乐豆：" + str(ledou)
         )
 
-        info = safe_json(info_resp, "用户信息(signuserinfo)")
-
-        if info:
-
-            logger(
-                "乐豆：" + str(info.get("ledou"))
-            )
-
-            logger(
-                "延保：" + str(info.get("serviceAmount")) + "天"
-            )
-
-
-        time.sleep(1)
-
-
-        cal_resp = session.get(
-
-            "https://mclub.lenovo.com.cn/getsignincal",
-
-            headers=ajax_headers(),
-
-            timeout=15
-
+        logger(
+            "延保：" + str(service_amount) + "天"
         )
 
-        cal = safe_json(cal_resp, "签到日历(getsignincal)")
 
-        if cal:
+        cal = None
+        days = None
 
-            days=cal.get(
-                "signinCal",
-                {}
-            ).get(
-                "continueCount"
+        for attempt in range(4):
+
+            cal_resp = session.get(
+
+                "https://mclub.lenovo.com.cn/getsignincal",
+
+                headers=ajax_headers(),
+
+                timeout=15
+
             )
 
+            cal = safe_json(cal_resp, "签到日历(getsignincal)")
+
+            if cal:
+
+                days=cal.get(
+                    "signinCal",
+                    {}
+                ).get(
+                    "continueCount"
+                )
+
+            if days is not None:
+
+                break
 
             logger(
-                "连续签到：" + str(days) + "天"
+                "连续签到天数暂未同步，重试..."
             )
+
+            time.sleep(2 + attempt * 2)
+
+
+        logger(
+            "连续签到：" + str(days) + "天"
+        )
 
 
     except Exception as e:
