@@ -1,0 +1,39 @@
+name: Keep Alive
+
+on:
+  # 1. 允许手动触发（方便你立即测试）
+  workflow_dispatch:
+  # 2. 定时任务：每周一 UTC 时间 0:00 自动运行 (对应 UTC 00:00)
+  schedule:
+    - cron: '0 0 * * 1'
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    
+    # 给 Action 授予修改/写入仓库代码的权限
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Update Heartbeat File
+        run: |
+          # 将当前时间戳写入 heartbeat.txt 文件
+          echo "Last active update: $(date -u)" > heartbeat.txt
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.value "github-actions[bot]@users.noreply.github.com"
+          
+          git add heartbeat.txt
+          # 检查是否有文件改动，避免无意义的提交报错
+          if git status --porcelain | grep -q .; then
+            git commit -m "chore: keep workflow alive [skip ci]"
+            git push
+          else
+            echo "No changes detected."
+          fi
