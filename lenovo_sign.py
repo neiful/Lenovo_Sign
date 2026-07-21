@@ -5,6 +5,12 @@ import random
 import re
 import time
 import requests
+from datetime import datetime, timezone, timedelta
+
+
+# 记录文件路径（追加写入），以及使用的时区（北京时间 UTC+8）
+LOG_FILE = os.environ.get("SIGN_LOG_FILE", "sign_history.txt")
+CN_TZ = timezone(timedelta(hours=8))
 
 
 USER_AGENT = [
@@ -215,12 +221,28 @@ def get_token(session):
     )
 
 
-    if token:
+    if not token:
 
-        return token[0]
+        # 拿不到token时，打印页面片段和状态码，方便判断是不是
+        # 返回了验证码/风控页面而不是正常的签到页
+        logger(
+            "signlist页面未匹配到token｜HTTP状态码：" + str(r.status_code)
+            + "｜页面片段：" + r.text[:200].replace("\n", " ")
+        )
+
+        return None
 
 
-    return None
+    if len(token) > 1:
+
+        # 页面上如果有多个"token = ..."，说明我们的正则可能抓错了变量，
+        # 打印出来方便对照排查（不影响当前逻辑，仍然取第一个）
+        logger(
+            "signlist页面匹配到多个token候选：" + str(token) + "，当前取第一个"
+        )
+
+
+    return token[0]
 
 
 
@@ -250,6 +272,37 @@ def ajax_headers():
             "zh-CN,en-US;q=0.8"
 
     }
+
+
+
+def append_history(ledou, service_amount, continue_days):
+    """把本次运行结果追加写入本地txt文件，一行一条记录。"""
+
+    now_str = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
+    line = (
+        now_str
+        + " | 乐豆：" + str(ledou)
+        + " | 延保：" + str(service_amount) + "天"
+        + " | 连续签到：" + str(continue_days) + "天"
+        + "\n"
+    )
+
+    try:
+
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+
+            f.write(line)
+
+        logger(
+            "已写入记录文件：" + LOG_FILE
+        )
+
+    except Exception as e:
+
+        logger(
+            "写入记录文件失败：" + str(e)
+        )
 
 
 
@@ -379,6 +432,10 @@ def sign(session):
 
 
 
+    logger(
+        "使用token提交签到（前8位：" + str(token)[:8] + "...）"
+    )
+
     data = submit_sign(session, token)
 
     if data is not None:
@@ -417,6 +474,10 @@ def sign(session):
                 time.sleep(2)
 
             if fresh_token:
+
+                logger(
+                    "使用新token提交签到（前8位：" + str(fresh_token)[:8] + "...）"
+                )
 
                 data = submit_sign(session, fresh_token)
 
@@ -549,6 +610,9 @@ def sign(session):
         logger(
             "连续签到：" + str(days) + "天"
         )
+
+
+        append_history(ledou, service_amount, days)
 
 
     except Exception as e:
