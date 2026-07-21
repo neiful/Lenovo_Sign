@@ -4,219 +4,495 @@ import logging
 import random
 import re
 import time
-
 import requests
+
 
 USER_AGENT = [
     "Mozilla/5.0 (Linux; Android 12; Redmi K30 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 11; zh-cn; PDYM20 Build/RP1A.200720.011) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 HeyTapBrowser/40.7.24.9",
+    "Mozilla/5.0 (Linux; Android 11; zh-cn; PDYM20 Build/RP1A.200720.011) AppleWebKit/537.36 Chrome/70.0 Mobile Safari/537.36"
 ]
 
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s: %(message)s",
+    format="%(asctime)s - %(levelname)s: %(message)s"
 )
 
 logger = logging.getLogger(__name__).info
 
 
+LOGIN_TICKET = (
+    "5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3"
+)
+
+
+SERVICE_URL = (
+    "https://mclub.lenovo.com.cn/"
+)
+
+
+
 def create_session():
+
     s = requests.Session()
 
     s.headers.update({
+
         "User-Agent": random.choice(USER_AGENT),
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+
+        "Accept-Language":
+            "zh-CN,zh;q=0.9"
+
     })
 
     return s
 
 
-def login(username, password):
 
-    session = create_session()
+def login(username,password):
+
+
+    session=create_session()
+
 
     try:
+
+
+        # 初始化登录环境
 
         session.get(
             "https://reg.lenovo.com.cn/auth/rebuildleid",
             timeout=15
         )
 
-        session.get(
-            "https://reg.lenovo.com.cn/auth/v1/login?ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3&ru=https%3A%2F%2Fmclub.lenovo.com.cn%2F",
+
+        login_page=session.get(
+
+            "https://reg.lenovo.com.cn/auth/v1/login"
+            "?ticket="+LOGIN_TICKET
+            "&ru=https%3A%2F%2Fmclub.lenovo.com.cn%2F",
+
             timeout=15
+
         )
 
-        data = (
-            f"account={username}"
-            f"&password={base64.b64encode(password.encode()).decode()}"
-            "&ps=1"
-            "&ticket=5e9b6d3d-4500-47fc-b32b-f2b4a1230fd3"
-            "&codeid="
-            "&code="
-            "&slide=v2"
-            "&applicationPlatform=2"
-            "&shopId=1"
-            "&os=web"
-            "&deviceId=test"
-            "&websiteCode=10000001"
+
+        logger(
+            f"登录页状态:{login_page.status_code}"
         )
 
-        r = session.post(
+
+        # 提交账号密码
+
+        data={
+
+            "account":username,
+
+            "password":
+                base64.b64encode(
+                    password.encode()
+                ).decode(),
+
+            "ps":"1",
+
+            "ticket":LOGIN_TICKET,
+
+            "codeid":"",
+
+            "code":"",
+
+            "slide":"v2",
+
+            "applicationPlatform":"2",
+
+            "shopId":"1",
+
+            "os":"web",
+
+            "deviceId":"",
+
+            "websiteCode":"10000001",
+
+            "websiteName":
+                "%25E5%2595%2586%25E5%259F%258E%25E7%25AB%2599",
+
+            "forwardPageUrl":
+                "https%253A%252F%252Fmclub.lenovo.com.cn%252F"
+
+        }
+
+
+
+        r=session.post(
+
             "https://reg.lenovo.com.cn/auth/v2/doLogin",
+
             data=data,
-            timeout=15,
+
+            timeout=15
+
         )
 
-        try:
-            j = r.json()
-            logger(f"登录返回：{j}")
-        except:
-            logger("登录返回不是JSON")
-            logger(r.text[:500])
+
+
+        result=r.json()
+
+
+        logger(
+            f"登录结果:{result.get('ret')} {result.get('msg')}"
+        )
+
+
+        if result.get("ret")!="0":
+
+            logger(result)
+
             return None
 
-        logger(f"Cookie：{session.cookies.get_dict()}")
 
-        home = session.get(
-            "https://mclub.lenovo.com.cn/",
-            timeout=15,
+
+        tgt=result.get("tgt")
+
+
+        if not tgt:
+
+            logger("没有获取TGT")
+
+            return None
+
+
+
+        logger("获取TGT成功")
+
+
+
+        #
+        # CAS关键步骤
+        # 用TGT换service ticket
+        #
+
+
+        cas_headers={
+
+            "User-Agent":
+                random.choice(USER_AGENT),
+
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+
+        }
+
+
+
+        service_ticket=session.post(
+
+            "https://reg.lenovo.com.cn/auth/v1/tickets/"
+            + tgt,
+
+            data={
+
+                "service":
+                    SERVICE_URL
+
+            },
+
+            headers=cas_headers,
+
+            timeout=15
+
+        )
+
+
+
+        logger(
+            f"service ticket返回:{service_ticket.text[:100]}"
+        )
+
+
+
+        if service_ticket.status_code!=200:
+
+            logger("获取service ticket失败")
+
+            return None
+
+
+
+        ticket=service_ticket.text.strip()
+
+
+
+        #
+        # 携带ticket访问mclub
+        # 建立业务session
+        #
+
+
+        callback=session.get(
+
+            SERVICE_URL
+            +
+            "?ticket="
+            +
+            ticket,
+
             allow_redirects=True,
+
+            timeout=15
+
         )
 
-        logger(f"首页URL：{home.url}")
 
-        if "login" in home.url.lower():
-            logger("登录失败，仍然跳转到了登录页。")
+
+        logger(
+            f"mclub最终地址:{callback.url}"
+        )
+
+
+        logger(
+            f"最终Cookie:{session.cookies.get_dict()}"
+        )
+
+
+        time.sleep(1)
+
+
+
+        # 验证业务登录
+
+        check=session.get(
+
+            "https://mclub.lenovo.com.cn/signuserinfo",
+
+            timeout=15
+
+        )
+
+
+        logger(
+            f"登录验证:{check.text}"
+        )
+
+
+
+        if "Must login" in check.text:
+
+            logger(
+                "mclub没有建立登录态"
+            )
+
             return None
 
-        logger("登录成功。")
+
+
+        logger(
+            "完整CAS登录成功"
+        )
+
 
         return session
 
+
+
     except Exception as e:
-        logger(f"登录异常：{e}")
+
+
+        logger(
+            f"登录异常:{e}"
+        )
+
         return None
+
+
 
 
 def sign(session):
 
+
     try:
 
-        r = session.get(
+
+        page=session.get(
+
             "https://mclub.lenovo.com.cn/signlist/",
-            timeout=15,
+
+            timeout=15
+
         )
 
-        logger(f"signlist状态：{r.status_code}")
-        logger(f"signlist最终URL：{r.url}")
 
-        tokens = re.findall(
+        token_list=re.findall(
+
             r'token\s*=\s*"(.*?)"',
-            r.text,
+
+            page.text
+
         )
 
-        if not tokens:
 
-            logger("没有找到token！")
+        if not token_list:
 
-            logger("页面前1000字符：")
-            print(r.text[:1000])
+
+            logger("获取token失败")
+
+            logger(page.text[:500])
 
             return
 
-        token = tokens[0]
 
-        logger(f"token={token}")
 
-        headers = {
-            "X-Requested-With": "XMLHttpRequest",
-            "Origin": "https://mclub.lenovo.com.cn",
-            "Referer": "https://mclub.lenovo.com.cn/signlist/",
-            "User-Agent": random.choice(USER_AGENT),
-        }
+        token=token_list[0]
 
-        resp = session.post(
-            "https://mclub.lenovo.com.cn/signadd",
-            data={
-                "_token": token,
-                "memberSource": 1,
-            },
-            headers=headers,
-            timeout=15,
+
+        logger(
+            "token获取成功"
         )
 
-        logger(resp.text)
+
+        headers={
+
+
+            "Origin":
+                "https://mclub.lenovo.com.cn",
+
+
+            "Referer":
+                "https://mclub.lenovo.com.cn/signlist/",
+
+
+            "X-Requested-With":
+                "XMLHttpRequest",
+
+
+            "Content-Type":
+                "application/x-www-form-urlencoded; charset=UTF-8",
+
+
+            "User-Agent":
+                random.choice(USER_AGENT)
+
+        }
+
+
+        data={
+
+            "_token":token,
+
+            "memberSource":"1"
+
+        }
+
+
+
+        r=session.post(
+
+            "https://mclub.lenovo.com.cn/signadd",
+
+            data=data,
+
+            headers=headers,
+
+            timeout=15
+
+        )
+
+
+        logger(
+            r.text
+        )
+
+
 
         try:
-            j = resp.json()
 
-            if j.get("success"):
-                logger("签到成功！")
+            result=r.json()
+
+            if result.get("success"):
+
+                logger("签到成功")
+
             else:
-                logger(f"签到返回：{j}")
+
+                logger("今天可能已经签到")
+
 
         except:
-            logger("签到返回不是JSON")
-            logger(resp.text)
 
-        try:
+            pass
 
-            info = session.get(
-                "https://mclub.lenovo.com.cn/signuserinfo",
-                timeout=15,
-            ).json()
 
-            logger(f"signuserinfo={info}")
 
-        except Exception as e:
-            logger(f"获取用户信息失败：{e}")
+        info=session.get(
 
-        try:
+            "https://mclub.lenovo.com.cn/signuserinfo",
 
-            cal = session.get(
-                "https://mclub.lenovo.com.cn/getsignincal",
-                timeout=15,
-            ).json()
+            timeout=15
 
-            logger(f"getsignincal={cal}")
+        ).json()
 
-        except Exception as e:
-            logger(f"获取签到信息失败：{e}")
+
+        logger(
+            f"乐豆:{info.get('ledou')}"
+        )
+
+
+        logger(
+            f"延保:{info.get('serviceAmount')}"
+        )
+
+
 
     except Exception as e:
 
-        logger(f"签到异常：{e}")
+        logger(
+            f"签到异常:{e}"
+        )
+
 
 
 def main():
 
-    username = os.getenv("USERNAME")
-    password = os.getenv("PASSWORD")
 
-    if not username or not password:
-        logger("没有读取到环境变量 USERNAME / PASSWORD")
-        return
+    username=os.getenv("USERNAME")
+
+    password=os.getenv("PASSWORD")
+
 
     for i in range(3):
 
-        logger(f"开始登录，第{i+1}次尝试...")
 
-        session = login(username, password)
+        logger(
+            f"尝试 {i+1}/3"
+        )
+
+
+        session=login(
+
+            username,
+
+            password
+
+        )
+
 
         if session:
 
             sign(session)
 
-            session.close()
-
             return
+
+
 
         time.sleep(5)
 
-    logger("连续三次登录失败。")
 
 
-if __name__ == "__main__":
+    logger(
+        "全部失败"
+    )
+
+
+
+if __name__=="__main__":
+
     main()
