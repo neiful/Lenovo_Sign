@@ -385,17 +385,36 @@ def sign(session):
 
         msg = str(data.get("msg") or data.get("message") or "")
 
-        # CSRF mismatch 意味着提交时token已失效，重新获取一次新token再试一次，
-        # 而不是直接判定失败（这是之前偶发失败的主要原因之一）
-        if (not data.get("success")) and "csrf" in msg.lower():
+        # CSRF mismatch 意味着提交时token已失效，重新获取新token再试，
+        # 而不是直接判定失败（这是之前偶发失败的主要原因之一）。
+        # 拿新token这一步本身也可能失败，所以给3次机会，而不是只试1次。
+        retry_count = 0
+
+        while (data is not None) and (not data.get("success")) and ("csrf" in msg.lower()) and (retry_count < 3):
+
+            retry_count += 1
 
             logger(
-                "签到token失效（CSRF mismatch），重新获取token后重试一次..."
+                "签到token失效（CSRF mismatch），重新获取token后重试（第" + str(retry_count) + "/3次）..."
             )
 
             time.sleep(2)
 
-            fresh_token = get_token(session)
+            fresh_token = None
+
+            for i in range(3):
+
+                fresh_token = get_token(session)
+
+                if fresh_token:
+
+                    break
+
+                logger(
+                    "重试获取token失败（" + str(i + 1) + "/3），稍后再试..."
+                )
+
+                time.sleep(2)
 
             if fresh_token:
 
@@ -406,8 +425,10 @@ def sign(session):
             else:
 
                 logger(
-                    "重试时仍无法获取token"
+                    "多次尝试后仍无法获取新token"
                 )
+
+                break
 
         if data is None:
 
