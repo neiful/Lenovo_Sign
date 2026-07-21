@@ -183,7 +183,14 @@ def get_token(session):
             "https://mclub.lenovo.com.cn/",
 
         "Accept":
-            "text/html,application/xhtml+xml"
+            "text/html,application/xhtml+xml",
+
+        # 避免拿到 CDN/浏览器缓存的旧页面，导致 token 是过期的
+        "Cache-Control":
+            "no-cache",
+
+        "Pragma":
+            "no-cache"
 
     }
 
@@ -265,38 +272,8 @@ def safe_json(response, label):
 
 
 
-def sign(session):
-
-
-    for i in range(3):
-
-
-        token=get_token(session)
-
-
-        if token:
-
-            break
-
-
-        logger(
-            "获取签到token失败，重新建立session..."
-        )
-
-
-        time.sleep(2)
-
-
-
-    if not token:
-
-        logger(
-            "签到失败：无法获取token"
-        )
-
-        return
-
-
+def submit_sign(session, token):
+    """用给定token提交一次签到请求，返回解析后的JSON（失败返回None）。"""
 
     headers={
 
@@ -363,24 +340,98 @@ def sign(session):
 
     )
 
+    return safe_json(result, "签到(signadd)")
 
 
-    data = safe_json(result, "签到(signadd)")
+
+def sign(session):
+
+
+    token = None
+
+    for i in range(3):
+
+
+        token=get_token(session)
+
+
+        if token:
+
+            break
+
+
+        logger(
+            "获取签到token失败，重新建立session..."
+        )
+
+
+        time.sleep(2)
+
+
+
+    if not token:
+
+        logger(
+            "签到失败：无法获取token"
+        )
+
+        return
+
+
+
+    data = submit_sign(session, token)
 
     if data is not None:
 
-        if data.get("success"):
+        msg = str(data.get("msg") or data.get("message") or "")
+
+        # CSRF mismatch 意味着提交时token已失效，重新获取一次新token再试一次，
+        # 而不是直接判定失败（这是之前偶发失败的主要原因之一）
+        if (not data.get("success")) and "csrf" in msg.lower():
+
+            logger(
+                "签到token失效（CSRF mismatch），重新获取token后重试一次..."
+            )
+
+            time.sleep(2)
+
+            fresh_token = get_token(session)
+
+            if fresh_token:
+
+                data = submit_sign(session, fresh_token)
+
+                msg = str(data.get("msg") or data.get("message") or "") if data else ""
+
+            else:
+
+                logger(
+                    "重试时仍无法获取token"
+                )
+
+        if data is None:
+
+            pass  # safe_json 已经打印过详细错误了
+
+        elif data.get("success"):
 
             logger(
                 "今日签到成功"
             )
 
+        elif "已" in msg or "重复" in msg or "duplicate" in msg.lower():
+
+            # 明确是"今天已经签过了"这种提示，才归类为已签到
+            logger(
+                "今日已经签到过了（服务器提示：" + msg + "）"
+            )
+
         else:
 
-            # 有的接口会把失败原因放在 msg/message 里，打印出来更容易分辨
-            # "已签到" 和 "真的失败" 这两种情况
+            # 其它情况一律视为真正的签到失败（如参数错误、被风控拦截等），
+            # 单独打印出来方便排查
             logger(
-                "今日已经签到（或签到未成功，返回信息：" + str(data.get("msg") or data.get("message")) + "）"
+                "签到失败：" + (msg if msg else "未知错误，原始返回：" + str(data))
             )
 
 
