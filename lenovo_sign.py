@@ -217,6 +217,52 @@ def get_token(session):
 
 
 
+# 统一给"数据接口"用的 AJAX 请求头，模拟真实浏览器行为
+# （之前 signuserinfo / getsignincal 完全没带这些头，是导致
+#  间歇性拿不到 JSON / 字段为 None 的主要原因）
+def ajax_headers():
+
+    return {
+
+        "Host":
+            "mclub.lenovo.com.cn",
+
+        "User-Agent":
+            random.choice(USER_AGENT),
+
+        "Referer":
+            "https://mclub.lenovo.com.cn/signlist",
+
+        "Accept":
+            "application/json, text/javascript, */*; q=0.01",
+
+        "X-Requested-With":
+            "XMLHttpRequest",
+
+        "Accept-Language":
+            "zh-CN,en-US;q=0.8"
+
+    }
+
+
+
+def safe_json(response, label):
+    """尝试解析 JSON，失败时打印原始返回内容（截断）方便排查，而不是直接抛异常吞掉信息。"""
+
+    try:
+
+        return response.json()
+
+    except Exception as e:
+
+        logger(
+            label + " 解析JSON失败：" + str(e)
+            + "｜HTTP状态码：" + str(response.status_code)
+            + "｜原始内容（前200字符）：" + response.text[:200]
+        )
+
+        return None
+
 
 
 def sign(session):
@@ -319,10 +365,9 @@ def sign(session):
 
 
 
-    try:
+    data = safe_json(result, "签到(signadd)")
 
-        data=result.json()
-
+    if data is not None:
 
         if data.get("success"):
 
@@ -332,68 +377,72 @@ def sign(session):
 
         else:
 
+            # 有的接口会把失败原因放在 msg/message 里，打印出来更容易分辨
+            # "已签到" 和 "真的失败" 这两种情况
             logger(
-                "今日已经签到"
+                "今日已经签到（或签到未成功，返回信息：" + str(data.get("msg") or data.get("message")) + "）"
             )
 
 
-    except:
 
-        logger(
-            "签到返回异常"
-        )
-
-
-
-    time.sleep(1)
+    time.sleep(1.5)
 
 
 
     try:
 
 
-        info=session.get(
+        info_resp = session.get(
 
             "https://mclub.lenovo.com.cn/signuserinfo",
 
+            headers=ajax_headers(),
+
             timeout=15
 
-        ).json()
-
-
-
-        logger(
-            "乐豆：" + str(info.get("ledou"))
         )
 
+        info = safe_json(info_resp, "用户信息(signuserinfo)")
 
-        logger(
-            "延保：" + str(info.get("serviceAmount")) + "天"
-        )
+        if info:
+
+            logger(
+                "乐豆：" + str(info.get("ledou"))
+            )
+
+            logger(
+                "延保：" + str(info.get("serviceAmount")) + "天"
+            )
 
 
+        time.sleep(1)
 
-        cal=session.get(
+
+        cal_resp = session.get(
 
             "https://mclub.lenovo.com.cn/getsignincal",
 
+            headers=ajax_headers(),
+
             timeout=15
 
-        ).json()
-
-
-
-        days=cal.get(
-            "signinCal",
-            {}
-        ).get(
-            "continueCount"
         )
 
+        cal = safe_json(cal_resp, "签到日历(getsignincal)")
 
-        logger(
-            "连续签到：" + str(days) + "天"
-        )
+        if cal:
+
+            days=cal.get(
+                "signinCal",
+                {}
+            ).get(
+                "continueCount"
+            )
+
+
+            logger(
+                "连续签到：" + str(days) + "天"
+            )
 
 
     except Exception as e:
