@@ -3,8 +3,7 @@ name: Lenovo Sign
 on:
   schedule:
     - cron: '30 18 * * *'  # 北京时间 02:30 (第二天) / UTC 20:30
-    - cron: '30 6 * * *'   # 北京时间 14:30 / UTC 08:30
-  
+    
   workflow_dispatch:
 
 permissions:
