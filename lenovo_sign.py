@@ -414,11 +414,11 @@ def sign(session):
 
 
         logger(
-            "获取签到token失败，重新建立session..."
+            "获取签到token失败（第" + str(i + 1) + "/3次），等待后重试..."
         )
 
 
-        time.sleep(2)
+        time.sleep(5 + i * 10)
 
 
 
@@ -428,7 +428,7 @@ def sign(session):
             "签到失败：无法获取token"
         )
 
-        return
+        return False
 
 
 
@@ -455,7 +455,7 @@ def sign(session):
                 "签到token失效（CSRF mismatch），重新获取token后重试（第" + str(retry_count) + "/3次）..."
             )
 
-            time.sleep(2)
+            time.sleep(5 + retry_count * 10)
 
             fresh_token = None
 
@@ -471,7 +471,7 @@ def sign(session):
                     "重试获取token失败（" + str(i + 1) + "/3），稍后再试..."
                 )
 
-                time.sleep(2)
+                time.sleep(5 + i * 10)
 
             if fresh_token:
 
@@ -491,6 +491,8 @@ def sign(session):
 
                 break
 
+        sign_success = False
+
         if data is None:
 
             pass  # safe_json 已经打印过详细错误了
@@ -501,12 +503,16 @@ def sign(session):
                 "今日签到成功"
             )
 
+            sign_success = True
+
         elif "已" in msg or "重复" in msg or "duplicate" in msg.lower():
 
             # 明确是"今天已经签过了"这种提示，才归类为已签到
             logger(
                 "今日已经签到过了（服务器提示：" + msg + "）"
             )
+
+            sign_success = True
 
         else:
 
@@ -622,6 +628,9 @@ def sign(session):
         )
 
 
+    return sign_success
+
+
 
 
 
@@ -641,11 +650,13 @@ def main():
             "缺少账号密码"
         )
 
-        return
+        exit(1)
 
 
 
-    for i in range(3):
+    max_attempts = 3
+
+    for i in range(max_attempts):
 
 
         session=login(
@@ -654,28 +665,45 @@ def main():
         )
 
 
-        if session:
+        if not session:
 
-            sign(session)
+            logger(
+                f"第{i+1}次登录失败"
+            )
 
-            session.close()
+            time.sleep(10 + i * 15)
+
+            continue
+
+
+        success = sign(session)
+
+        session.close()
+
+
+        if success:
 
             return
 
 
-
+        # 签到没成功（大概率是当时服务器不稳定/风控），换一个全新session
+        # 重新走一遍完整流程，而不是在同一个可能有问题的session里死磕
         logger(
-            f"第{i+1}次登录失败"
+            f"第{i+1}次尝试签到未成功，"
+            + ("准备换新session重试..." if i < max_attempts - 1 else "已达最大重试次数")
         )
 
+        if i < max_attempts - 1:
 
-        time.sleep(5)
+            time.sleep(20 + i * 20)
 
 
 
     logger(
-        "全部尝试失败"
+        "全部尝试均未成功签到"
     )
+
+    exit(1)
 
 
 
