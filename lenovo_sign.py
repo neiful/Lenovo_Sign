@@ -37,11 +37,15 @@ def login(username, password):
 
     session = requests.Session()
 
+    # 整次运行只随机选一次UA，全程复用（同一个session里UA频繁切换
+    # 是反爬系统很容易识别的异常特征之一）
+    session.ua = random.choice(USER_AGENT)
+
 
     session.headers.update({
 
         "user-agent":
-            random.choice(USER_AGENT),
+            session.ua,
 
         "Content-Type":
             "application/x-www-form-urlencoded; charset=UTF-8"
@@ -146,7 +150,7 @@ def login(username, password):
             headers={
 
                 "User-Agent":
-                    random.choice(USER_AGENT),
+                    session.ua,
 
                 "Referer":
                     "https://reg.lenovo.com.cn/"
@@ -183,7 +187,7 @@ def get_token(session):
             "mclub.lenovo.com.cn",
 
         "User-Agent":
-            random.choice(USER_AGENT),
+            session.ua,
 
         "Referer":
             "https://mclub.lenovo.com.cn/",
@@ -249,7 +253,7 @@ def get_token(session):
 # 统一给"数据接口"用的 AJAX 请求头，模拟真实浏览器行为
 # （之前 signuserinfo / getsignincal 完全没带这些头，是导致
 #  间歇性拿不到 JSON / 字段为 None 的主要原因）
-def ajax_headers():
+def ajax_headers(session):
 
     return {
 
@@ -257,7 +261,7 @@ def ajax_headers():
             "mclub.lenovo.com.cn",
 
         "User-Agent":
-            random.choice(USER_AGENT),
+            session.ua,
 
         "Referer":
             "https://mclub.lenovo.com.cn/signlist",
@@ -356,7 +360,7 @@ def submit_sign(session, token):
 
 
         "user-agent":
-            random.choice(USER_AGENT)
+            session.ua
             +
             "/lenovoofficialapp/16554342219868859_10128085590/newversion/versioncode-1000080/",
 
@@ -428,7 +432,7 @@ def sign(session):
             "签到失败：无法获取token"
         )
 
-        return False
+        return False, None, None, None
 
 
 
@@ -527,6 +531,10 @@ def sign(session):
     time.sleep(1.5)
 
 
+    ledou = None
+    service_amount = None
+    days = None
+
 
     try:
 
@@ -534,8 +542,6 @@ def sign(session):
         # 刚签到成功时，服务器的乐豆/延保/连续天数可能还没同步过来，
         # 这里做几次重试，每次间隔递增，直到拿到非空数据
         info = None
-        ledou = None
-        service_amount = None
 
         for attempt in range(4):
 
@@ -545,7 +551,7 @@ def sign(session):
 
                 "https://mclub.lenovo.com.cn/signuserinfo",
 
-                headers=ajax_headers(),
+                headers=ajax_headers(session),
 
                 timeout=15
 
@@ -585,7 +591,7 @@ def sign(session):
 
                 "https://mclub.lenovo.com.cn/getsignincal",
 
-                headers=ajax_headers(),
+                headers=ajax_headers(session),
 
                 timeout=15
 
@@ -618,9 +624,6 @@ def sign(session):
         )
 
 
-        append_history(ledou, service_amount, days)
-
-
     except Exception as e:
 
         logger(
@@ -628,7 +631,7 @@ def sign(session):
         )
 
 
-    return sign_success
+    return sign_success, ledou, service_amount, days
 
 
 
@@ -656,6 +659,8 @@ def main():
 
     max_attempts = 3
 
+    last_ledou, last_service_amount, last_days = None, None, None
+
     for i in range(max_attempts):
 
 
@@ -676,12 +681,22 @@ def main():
             continue
 
 
-        success = sign(session)
+        success, ledou, service_amount, days = sign(session)
 
         session.close()
 
+        # 只要这次拿到了非空数据就更新一下，保证最后写入的是最新的有效值
+        if ledou is not None:
+            last_ledou = ledou
+        if service_amount is not None:
+            last_service_amount = service_amount
+        if days is not None:
+            last_days = days
+
 
         if success:
+
+            append_history(last_ledou, last_service_amount, last_days)
 
             return
 
@@ -696,6 +711,11 @@ def main():
         if i < max_attempts - 1:
 
             time.sleep(20 + i * 20)
+
+
+    # 全部尝试都失败了，也写一条记录（数值可能是None，方便从历史文件里
+    # 直接看出哪天彻底签到失败了）
+    append_history(last_ledou, last_service_amount, last_days)
 
 
 
