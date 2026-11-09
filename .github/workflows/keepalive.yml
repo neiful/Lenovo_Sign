@@ -18,7 +18,6 @@ jobs:
 
       - name: Update Hidden Heartbeat
         run: |
-          # 写入隐藏目录，根目录绝对干净
           echo "Last active: $(date -u)" > .github/keepalive.txt
 
       - name: Auto Commit and Push
