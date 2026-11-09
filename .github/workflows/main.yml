@@ -3,7 +3,6 @@ name: Lenovo Sign
 on:
   schedule:
     - cron: '15 16 * * *'  
-    
   workflow_dispatch:
 
 permissions:
