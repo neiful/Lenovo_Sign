@@ -1,9 +1,9 @@
 name: Lenovo Sign
 
 on:
-  schedule:
-    - cron: '37 16 * * *'  
   workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-lenovo-sign]
 
 permissions:
   contents: write
